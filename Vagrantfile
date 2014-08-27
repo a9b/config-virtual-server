@@ -6,8 +6,11 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
+  # 文字コードのエラー制御
+  Encoding.default_external = 'UTF-8'
+
   # プロビジョニングのファイル指定
-  config.vm.provision :shell, :path => "bootstrap.sh"
+  config.vm.provision :shell, :path => "bootstrap_start.sh"
 
   # vagrant up 時に Chef が入っているか確認してインストールしてくれる
   # https://github.com/schisamo/vagrant-omnibus
@@ -41,12 +44,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     chef.add_recipe "apache2"
     chef.add_recipe "apache2_virtualhost"
     chef.add_recipe "apache2_virtualhost::add"
-#    chef.add_recipe "apache2::mod_php5"
+    chef.add_recipe "apache2::mod_php5"
 #    chef.add_recipe "mysql"
 #    chef.add_recipe "mysql::client"
 #    chef.add_recipe "mysql::server"
-#    chef.add_recipe "php"
-#    chef.add_recipe "vim"
+    chef.add_recipe "php"
+    chef.add_recipe "vim"
 #    chef.add_recipe "nginx"
 
      # attributesを直接上書き
@@ -60,17 +63,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 #        :server_debian_password => "123456"
 #      }
 #    }
-    chef.json = {
-      :apache => {
-        :access_log => "hogehoge.log"
-      },
-    }
+
+    # recipesの上書きをする
+    #chef.json = {
+    #  :apache => {
+    #    :access_log => "hogehoge.log"
+    #  },
+    #}
 
 
     # 実行する./roles/xxx.rb
 #    chef.add_role("apache_add_webserver")
 #    chef.add_role("iptabele_local_rule")
   end
+
+  config.vm.provision :shell, :path => "bootstrap_end.sh"
 
   # All Vagrant configuration is done here. The most common configuration
   # options are documented and commented below. For a complete reference,
@@ -81,27 +88,30 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "centos_64"
 
   #config.vm.hostname = "centos_64"
+  config.vm.hostname = "a9b.local"
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
 
   # CentOS 6.4 x86_64 Minimal (VirtualBox Guest Additions 4.2.16, Chef 11.6.0, Puppet 3.2.3)
   config.vm.box_url = "http://developer.nrel.gov/downloads/vagrant-boxes/CentOS-6.4-x86_64-v20130731.box"
+  #config.vm.box_url = "http://developer.nrel.gov/downloads/vagrant-boxes/CentOS-6.4-i386-v20130731.box"
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # config.vm.network :forwarded_port, guest: 80, host: 8080
 
+  # host(127.0.0.1)の8082番を、guest(仮想環境)の80番にポートフォワードする
+  #config.vm.network :forwarded_port, guest: 80, host: 8082, auto_correct: true
+
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   # config.vm.network :private_network, ip: "192.168.33.10" 
 
   # ホストオンリーネットワークで以下のIPアドレスを割り当てる
-  #config.vm.network :private_network, ip:"192.168.0.1"
-
-  # host(127.0.0.1)の8082番を、guest(仮想環境)の80番にポートフォワードする
-  #config.vm.network :forwarded_port, guest: 80, host: 8082
+  config.vm.network :private_network, ip:"192.168.0.200"
+  #config.vm.network :private_network, ip:"192.168.0.200", virtualbox__intnet: "intnet"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -116,7 +126,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+  config.vm.synced_folder "./../../../www", "/var/www/html"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
